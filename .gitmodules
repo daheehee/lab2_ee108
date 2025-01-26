@@ -1,0 +1,3 @@
+[submodule "lab2"]
+	path = lab2
+	url = https://code.stanford.edu/ee108a/winter2025/lab2.git
