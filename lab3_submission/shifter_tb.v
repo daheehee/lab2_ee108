@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module shifter_tb ();
     reg clk;
     reg shift_left;
@@ -25,67 +26,75 @@ module shifter_tb ();
         $dumpvars ;
         
         // shift to the left
-        rst = 1;
-        #70
-        $display(out);
+        #10 rst = 1;
+        #10 
+        rst = 0;
         shift_left = 1'd1;
         shift_right = 1'd0;
-        rst = 0;
         expected = 4'b010;
-        #70
-        $display("shift left by one -> %b, expected %b", out, expected);
-        #70
+        #20 $display("shift left by one -> %b, expected %b", out, expected);
         
         // shift to the right
-        rst = 1;
-        #70
+        #10 rst = 1;
+        #10
         rst = 0;
         shift_left = 1'd0;
         shift_right = 1'd1;
-        expected = 4'b100;
-        #70
-        $display("shift right by one -> %b, expected %b", out, expected);
-        #70
+        expected = 4'b001;
+        #20 $display("shift right by one -> %b, expected %b", out, expected);
         
         // no shift
-        rst = 1;
-        #70
+        #10 rst = 1;
+        #10
         rst = 0;
         shift_left = 1'd0;
         shift_right = 1'd0;
         expected = 4'b001;
-        #70
+        #20
         $display("no shift -> %b, expected %b", out, expected);
-        #70
+        #10
         
         // both shifts pressed
-        rst = 1;
-        #70
+        #10 rst = 1;
+        #10
         rst = 0;
         shift_left = 1'd1;
         shift_right = 1'd1;
         expected = 4'b001;
-        #70
+        #20
         $display("both shift -> %b, expected %b", out, expected);
-        #70
+        #10
         
         // shift left to more than 4'b100
-        rst = 1;
-        #70
+        #10 rst = 1;
+        #10
         rst = 0;
-        shift_left = 1'd5;
+        #20
+        shift_left = 1'd1;
         shift_right = 1'd0;
-        expected = 4'b010;
-        #70
-        $display("shift left exceeding 4'b100 -> %b, expected %b", out, expected);
-        #70
+        #20
+        shift_left = 1'd1;
+        shift_right = 1'd0;
+        #20
+        shift_left = 1'd1;
+        shift_right = 1'd0;
+        #20
+        shift_left = 1'd1;
+        shift_right = 1'd0;
+        #20
+        expected = 4'b1000;
+        #20
+        $display("shift left exceeding 4'b1000 -> %b, expected %b", out, expected);
         
         // store previous states
-        shift_left = 1'd1;
-        expected = 4'b100;
-        #70
+        #10 
+        shift_left = 1'd0;
+        shift_right = 1'd1;
+        #20
+        expected = 4'b0100;
+        #20
         $display("store previous states -> %b, expected %b", out, expected);
-        #70
+        #20
         
         $stop;
     end
