@@ -20,6 +20,7 @@ wire [3:0] blink_rate;
 dffr #(.WIDTH(4)) value_reg(.clk(clk), .r(rst), .d(next_blink_rate), .q(blink_rate)); // value register
 
 initial begin
+    out = 4'b001;
     next_blink_rate = 4'b0001;
 end
 
@@ -38,7 +39,7 @@ always @(*) begin
                 else if (shift_left == 1 && shift_right == 0) begin
                     next_state = `STATE_SHIFT_LEFT;
                 end
-                else if (shift_right == 1 && shift_left == 0) begin
+                else if (shift_left == 0 && shift_right == 1) begin
                     next_state =  `STATE_SHIFT_RIGHT;
                 end
                 else begin
@@ -46,16 +47,16 @@ always @(*) begin
                 end
             end
             `STATE_SHIFT_RIGHT: begin
-                next_blink_rate = ((blink_rate >> 4'b1) < 4'b001) ? 4'b100 : (blink_rate >> 4'b1);
+                next_blink_rate = ((blink_rate >> 4'b1) <= 4'b0001) ? 4'b0001 : (blink_rate >> 4'b1);
                 next_state = `STATE_DONE;
             end
             `STATE_SHIFT_LEFT: begin
-                next_blink_rate = ((blink_rate << 4'b1) > 4'b100) ? 4'b001 : (blink_rate << 4'b1);
+                next_blink_rate = ((blink_rate << 4'b1) == 4'b0000) ? 4'b1000 : (blink_rate << 4'b1);
                 next_state = `STATE_DONE;
             end
             `STATE_DONE: begin
                 out = next_blink_rate;
-                next_state = `STATE_DONE;
+                next_state = `STATE_BEGIN;
             end
         endcase
     end
