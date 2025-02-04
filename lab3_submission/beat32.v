@@ -26,12 +26,10 @@ dffr #(.WIDTH(5)) current_val(
 );
 
 always @(*) begin
-    next_state= `STATE_BEGIN;
-    count_en = 1'b1;
     if (rst == 0) begin
-
     case (state)
         `STATE_BEGIN: begin
+        count_en = 1'b1;
             next_val = load;
             next_state = `STATE_COUNTING;
         end    
@@ -42,6 +40,10 @@ always @(*) begin
         `STATE_DONE: begin
             next_val = 5'd0;
             next_state = `STATE_BEGIN;
+        end
+        default: begin
+            next_state= `STATE_BEGIN;
+            next_val = 5'd0;
         end
     endcase 
         if (val == 5'b00) begin

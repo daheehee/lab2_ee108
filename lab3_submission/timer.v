@@ -1,6 +1,6 @@
-module timer (
+module timer #(parameter TIMER = 1)(
     input wire clk,
-    input wire [7:0] load_val,
+    input wire [3:0] load_val,
     input wire rst,
     output reg done
 );
@@ -17,36 +17,54 @@ dffre #(.WIDTH(2)) current_state( .clk (clk), .r (rst), .en(count_en),
 .d (next_state), .q (state)
 );
 
-reg [7:0] next_count;
-wire [7:0] count; 
-dffr #(.WIDTH(8)) current_val(
-.clk (clk), .r (rst), .d (next_count), .q (count)
+reg [8:0] next_count;
+wire [8:0] count; 
+
+dffre #(.WIDTH(9)) current_val(
+.clk (clk), .r (rst), .en(count_en), .d (next_count), .q (count)
 );
+
 
 
 beat32 beat(.clk (clk), .rst(rst), .count_en(count_en));
 
+wire [8:0] period1;
+wire [8:0] period2;
+
+assign period1 = {load_val, 5'b00000};
+assign period2 = {3'b000, load_val, 2'b00};
+wire [8:0] test = 9'b0000_00100;
+
+
 always @(*) begin
-    next_state= `STATE_BEGIN;
     if (rst == 0) begin
     case (state)
         `STATE_BEGIN: begin
-            next_count = load_val;
-            next_state = (next_count == 8'b0000_00001) ? `STATE_DONE: `STATE_COUNTING;
+            if (TIMER == 1) begin
+            next_count = period1;
+            end
+            else begin 
+            next_count = period2;
+            end
+            next_state = (next_count == 9'b00000_0001) ? `STATE_DONE: `STATE_COUNTING;
         end    
         `STATE_COUNTING: begin
             next_count = count - 1'd1;
-            next_state = (count == 8'b0000_0010) ? `STATE_DONE : `STATE_COUNTING;
+            next_state = (count == 9'b00000_010) ? `STATE_DONE : `STATE_COUNTING;
         end
         `STATE_DONE: begin
-            next_count = 8'd0;
+            next_count = 9'd0;
             next_state = `STATE_BEGIN;
         end
+        default: begin
+            next_count = test;
+            next_state = (next_count == 9'b00000_0001) ? `STATE_DONE: `STATE_COUNTING;
+        end 
     endcase 
-            if (count == 8'b0) begin
+            if (count == 9'b0) begin
                 done = 1'b1;
             end
-            else begin
+            else begin 
                 done = 1'b0;
             end
     end
