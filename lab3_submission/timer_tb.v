@@ -1,20 +1,26 @@
 module timer_tb ();
     reg clk;
-    reg [7:0] load_val;
+    reg [3:0] load_val;
     reg rst;
     wire done;
     
-     timer DUT (.clk(clk), .load_val(load_val), .rst(rst), .done(done));
+     timer #(.TIMER(2)) DUT (.clk(clk), .load_val(load_val), .rst(rst), .done(done));
      always begin 
-     #5 clk = 0;
-     #5 clk = 1;
+     #0.1 clk = 0;
+     #0.1 clk = 1;
      end
      
      initial begin
         $dumpfile( "dump.vcd " ) ;
         $dumpvars ;
         rst = 1;
-        load_val = 8'b0000_0001;
+        load_val = 4'b0001;
+        #10
+        rst = 0;
+        #100
+        
+        rst = 1;
+        load_val = 4'b1000;
         #10
         rst = 0;
   

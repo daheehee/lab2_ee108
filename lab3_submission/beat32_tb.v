@@ -7,8 +7,8 @@ module beat32_tb ();
      beat32 DUT(.clk(clk), .rst(rst), .count_en(count_en));
      
      always begin 
-     #5 clk = 0;
-     #5 clk = 1;
+     #2 clk = 0;
+     #2 clk = 1;
      end
      
      initial begin
