@@ -1,4 +1,4 @@
-module shifter (
+module shifter #(parameter TIMER = 1) (
     input wire clk,
     input wire rst,
     input wire shift_left,
@@ -19,16 +19,18 @@ reg [3:0] next_blink_rate;
 wire [3:0] blink_rate;
 dffr #(.WIDTH(4)) value_reg(.clk(clk), .r(rst), .d(next_blink_rate), .q(blink_rate)); // value register
 
-initial begin
-    out = 4'b001;
-    next_blink_rate = 4'b0001;
-end
 
 // Implement state machine
 always @(*) begin
-    next_state = `STATE_BEGIN;
     if (rst == 1) begin
+        if (TIMER == 2) begin
+        next_blink_rate = 4'b1000;
+        out = 4'b1000;
+        end
+        else begin
         next_blink_rate = 4'b0001;
+        out = 4'b0001;
+        end
     end
     else if (rst == 0) begin
         case (state)
@@ -47,16 +49,24 @@ always @(*) begin
                 end
             end
             `STATE_SHIFT_RIGHT: begin
-                next_blink_rate = ((blink_rate >> 4'b1) <= 4'b0001) ? 4'b0001 : (blink_rate >> 4'b1);
+                next_blink_rate = (blink_rate == 4'b0001) ? 4'b0001 : (blink_rate >> 4'b1);
+                out = blink_rate; 
                 next_state = `STATE_DONE;
             end
             `STATE_SHIFT_LEFT: begin
-                next_blink_rate = ((blink_rate << 4'b1) == 4'b0000) ? 4'b1000 : (blink_rate << 4'b1);
+                next_blink_rate = (blink_rate == 4'b1000) ? 4'b1000 : (blink_rate << 4'b1);
+                out = blink_rate; 
                 next_state = `STATE_DONE;
             end
             `STATE_DONE: begin
                 out = next_blink_rate;
+                //out = blink_rate;
                 next_state = `STATE_BEGIN;
+            end
+            default: begin
+                    out = 4'b0001;
+                    next_blink_rate = 4'b0001;
+                    next_state = `STATE_BEGIN;
             end
         endcase
     end
