@@ -26,33 +26,51 @@ dffr #(.WIDTH(5)) current_val(
 );
 
 always @(*) begin
-    if (rst == 0) begin
-    case (state)
-        `STATE_BEGIN: begin
-        count_en = 1'b1;
-            next_val = load;
-            next_state = `STATE_COUNTING;
-        end    
-        `STATE_COUNTING: begin
-            next_val = val - 1'd1;
-            next_state = (val == 5'd2) ? `STATE_DONE : `STATE_COUNTING;
-        end
-        `STATE_DONE: begin
-            next_val = 5'd0;
-            next_state = `STATE_BEGIN;
-        end
-        default: begin
-            next_state= `STATE_BEGIN;
-            next_val = 5'd0;
-        end
-    endcase 
-        if (val == 5'b00) begin
-        count_en = 1'b1;
-        end
-        else begin
-        count_en = 1'b0;
-        end
-    end
-end 
+    
+    case (rst)
+        1'b1: begin
+            next_val = 0;
+        end 
+        1'b0: begin
+            if (next_val == 5'b0) begin
+                count_en = 1'b1;
+                next_val = load ;
+            end 
+            else begin
+                count_en = 1'b0;
+                next_val = val - 1'b1 ;
 
+            end
+       end
+     endcase
+
+//    if (rst == 0) begin
+//    case (state)
+//        `STATE_BEGIN: begin
+//            count_en = 1'b1;
+//            next_val = load;
+//            next_state = `STATE_COUNTING;
+//        end    
+//        `STATE_COUNTING: begin
+//            next_val = val - 1'd1;
+//            next_state = (val == 5'd2) ? `STATE_DONE : `STATE_COUNTING;
+//        end
+//        `STATE_DONE: begin
+//            next_val = 5'd0;
+//            next_state = `STATE_BEGIN;
+//        end
+//        default: begin
+//            next_state= `STATE_BEGIN;
+//            next_val = 5'd0;
+//        end
+//    endcase 
+//        if (val == 5'b00) begin
+//        count_en = 1'b1;
+//        end
+//        else begin
+//        count_en = 1'b0;
+//        end
+//    end
+//end 
+end
 endmodule
