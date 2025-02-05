@@ -17,8 +17,9 @@ module beat32_tb ();
         rst = 1;
         #10
         rst = 0;
-  
-        #1000
+        #140 //clock cycle = 4 second. 32 cycles * 4 time units  = 128 time units a little extra for good measure
+        //count_en will be high! 
+        
       $stop;
      end
 
