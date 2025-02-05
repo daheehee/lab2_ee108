@@ -2,6 +2,7 @@ module timer #(parameter TIMER = 1)(
     input wire clk,
     input wire [3:0] load_val,
     input wire rst,
+    input wire count_en,
     output reg done
 );
 
@@ -9,7 +10,7 @@ module timer #(parameter TIMER = 1)(
 `define STATE_COUNTING    2'd1
 `define STATE_DONE    2'd2
 
-wire count_en;
+//wire count_en;
 
 reg [1:0] next_state;
 wire [1:0] state;
@@ -26,7 +27,7 @@ dffre #(.WIDTH(9)) current_val(
 
 
 
-beat32 beat(.clk (clk), .rst(rst), .count_en(count_en));
+//beat32 beat(.clk (clk), .rst(rst), .count_en(count_en));
 
 wire [8:0] period1;
 wire [8:0] period2;
@@ -37,6 +38,9 @@ wire [8:0] test = 9'b0000_00100;
 
 
 always @(*) begin
+     $monitor("Time %0t: state = %b | count = %b | next_count = %b | done = %b", 
+             $time, state, count, next_count, done);
+             
     if (rst == 0) begin
     case (state)
         `STATE_BEGIN: begin
