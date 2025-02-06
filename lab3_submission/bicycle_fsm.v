@@ -28,6 +28,23 @@ module bicycle_fsm(
     
     wire [3:0] state;
     
+//    wire up_button;
+//    wire down_button;
+    
+//    button_press_unit fast_up(
+//        .clk(clk),
+//        .reset(reset),
+//        .in(faster),
+//        .out(up_button)
+//    );
+    
+//    button_press_unit slow_down(
+//        .clk(clk),
+//        .reset(reset),
+//        .in(slower),
+//        .out(down_button)
+//    );
+    
     master_fsm bicycle_m (
          .clk(clk), 
          .reset(reset), 
@@ -73,6 +90,10 @@ module bicycle_fsm(
     
     
     always @(*) begin
+        if (reset) begin
+            rear_light = 1'b0;
+        end 
+        else begin
         case (state)
             4'b0001:  rear_light = 1'b0;  // false
             4'b0010:  rear_light = 1'b1;  // true
@@ -80,6 +101,8 @@ module bicycle_fsm(
             4'b1000:  rear_light = out2; // out2
             default:  rear_light = 1'b0; // Default case: OFF
         endcase
+        end
+        
     end
 
     

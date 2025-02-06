@@ -14,7 +14,6 @@ dffre #(.WIDTH(9)) current_val(
 );
 
 reg before_done;
-
 one_pulse pulse(.clk(clk), .reset(rst), .in(before_done), .out(done));
 
 wire [8:0] period1;
@@ -28,10 +27,11 @@ always @(*) begin
              
     if (rst == 1) begin
         next_count = 9'd1;
+        before_done = 1'b0;
     end
     
     else begin
-        if (next_count == 9'd1) begin
+        if (count == 9'd1) begin
             if (TIMER == 1) begin
             next_count = period1;
             end
@@ -40,8 +40,12 @@ always @(*) begin
             end
             before_done = 1'b1;
         end
+        else if (count > 9'd1) begin
+            next_count = count - 1'd1; 
+            before_done = 1'b0;
+        end 
         else begin
-            next_count = count - 1'd1;
+            next_count = 9'd1; 
             before_done = 1'b0;
         end
         
