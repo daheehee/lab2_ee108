@@ -31,8 +31,8 @@ programmable_blinker #(.n(1)) DUT1 (
 );
 
     always begin 
-        #0.1 clk = 0; 
-        #0.1 clk = 1;
+        #0.05 clk = 0; 
+        #0.05 clk = 1;
     end
 
     always begin
@@ -50,75 +50,71 @@ programmable_blinker #(.n(1)) DUT1 (
         shift_left = 0;
         
         rst = 1;
-        #10
-        rst = 0;
-        
-        //Test behavior when nothing is pressed 
-        //Both flashes shouuld output the same thing
-        //
-        #120
-        $display("Nothing applied observing output.");
-        
-        //Test Shift_Left x3 from 0001 to 1000
-        //For Flash 1, goes slower from 1s on / 1s off to 8s on / 8s off
-        //For Flash 2, goes faster from 1s on / 1s off to 1/8s on / 1/8s off
-        shift_left = 1; //Shift left first time
-        #20 shift_left = 0;
-        
-        #20  
-        
-        shift_left = 1; //Shift left second time
-        #20 shift_left = 0;
-        
-        #20
-        
-        shift_left = 1; //Shift left third time
-        #20 shift_left = 0;
-        
-        #20
-        
-        shift_left = 1; //Shift left third time
-        #20 shift_left = 0;
-       
-        #100;
-        $display("Shift Left x3 applied, observing output,");
-  
-
-        //Test Shift_Right x2 from 1000 to 0010
-        //For Flash 1, goes faster from 8s on / 8s off to 2s on / 2s off
-        //For Flash 2, goes faster from 1/8s on / 1/8s off to 1/2s on / 1/2s off
-        shift_right = 1;
-        #0.1 shift_right = 0;
-        
-//        #10
-        
-//        shift_right = 1;
-//        #10 shift_right = 0;
-        
-        #500;
-        $display("Shift Right x1 applied, observing output...");
-
-
-//        //Test Shift_Right x2 from 0010 to 0001 (hits boundary)
-//        //For Flash 1, goes faster from 2s on / 2s off to 1s on / 1s off
-//        //For Flash 2, goes faster from 1/2s on / 1/2s off to 1s on / 1s off
-//        shift_right = 1;
-//        #20 shift_right = 0;
-        
-//        #10
-        
-//        shift_right = 1;
-//        #10 shift_right = 0;
-        
-//        #500;
-//        $display("Shift Right x2 applied, observing output...");
-
-
-//        rst = 1;
 //        #10
 //        rst = 0;
         
-//        // Stop simulation
+//        //Test behavior when nothing is pressed 
+//        //Both flashes shouuld output the same thing
+//        //
+//        #20
+//        $display("Nothing applied observing output.");
+        
+//        //Test Shift_Left x3 from 0001 to 1000
+//        //For Flash 1, goes slower from 1s on / 1s off to 8s on / 8s off
+//        //For Flash 2, goes faster from 1s on / 1s off to 1/8s on / 1/8s off
+//        shift_left = 1; //Shift left first time
+//        #0.3 shift_left = 0;
+        
+//        #0.3 
+        
+//        shift_left = 1; //Shift left second time
+//        #0.3 shift_left = 0;
+        
+//        #0.3
+        
+//        shift_left = 1; //Shift left third time
+//        #0.3 shift_left = 0;
+       
+       
+//        #260;
+//        $display("Shift Left x3 applied, observing output,");
+  
+
+//        //Test Shift_Right x2 from 1000 to 0010
+//        //For Flash 1, goes faster from 8s on / 8s off to 2s on / 2s off
+//        //For Flash 2, goes faster from 1/8s on / 1/8s off to 1/2s on / 1/2s off
+//        shift_right = 1;
+//        #0.1 shift_right = 0;
+        
+////        #10
+        
+////        shift_right = 1;
+////        #10 shift_right = 0;
+        
+//        #500;
+//        $display("Shift Right x1 applied, observing output...");
+
+
+////        //Test Shift_Right x2 from 0010 to 0001 (hits boundary)
+////        //For Flash 1, goes faster from 2s on / 2s off to 1s on / 1s off
+////        //For Flash 2, goes faster from 1/2s on / 1/2s off to 1s on / 1s off
+////        shift_right = 1;
+////        #20 shift_right = 0;
+        
+////        #10
+        
+////        shift_right = 1;
+////        #10 shift_right = 0;
+        
+////        #500;
+////        $display("Shift Right x2 applied, observing output...");
+
+
+////        rst = 1;
+////        #10
+////        rst = 0;
+        
+////        // Stop simulation
         $stop; 
     end
 

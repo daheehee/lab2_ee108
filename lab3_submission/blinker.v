@@ -20,6 +20,7 @@ always @(*) begin
     //if the rst is hit, output should go to 0
     if (rst) begin
         next_state = `STATE_OFF;
+        out = 0;
     end 
     //while rst is 0
     else begin
@@ -31,11 +32,11 @@ always @(*) begin
         else begin
             next_state = state;
         end
+        
     end
     //we're going to set next_state to rst or vice versa, not sure, and then
     //we need to determine what rst is
-   out = state;
-    
+    out = state;
 end
 
 

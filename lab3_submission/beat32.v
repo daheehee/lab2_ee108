@@ -5,13 +5,20 @@ module beat32 (
 );
 
 wire [21:0] load = 22'd3215000;
-//wire [4:0] load = 5'd11111;
+//wire [4:0] load = 5'b11111;
 
 reg [21:0] next_val;
 wire [21:0] val; 
 dffr #(.WIDTH(22)) current_val(
 .clk (clk), .r (rst), .d (next_val), .q (val)
 );
+
+
+//reg [4:0] next_val;
+//wire [4:0] val; 
+//dffr #(.WIDTH(5)) current_val(
+//.clk (clk), .r (rst), .d (next_val), .q (val)
+//);
 
 always @(*) begin
     
@@ -21,7 +28,7 @@ always @(*) begin
             count_en = 1'b0;
         end 
         1'b0: begin
-            if (val == 5'b0) begin
+            if (val == 22'b0) begin
                 count_en = 1'b1;
                 next_val = load ;
             end 

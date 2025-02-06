@@ -13,7 +13,7 @@ module timer_tb ();
      #0.05 clk = 0;
      #0.05 clk = 1;
      end
-     
+    
      //beat 32 simulator
      always begin 
      #0.1 count_en = 0;
