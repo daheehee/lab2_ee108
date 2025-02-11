@@ -26,7 +26,7 @@ module note_player_tb();
     beat_generator #(.WIDTH(17), .STOP(1500)) beat_generator(
         .clk(clk),
         .reset(reset),
-        .en(1'b1),
+        .en(play_enable),
         .beat(beat)
     );
 
@@ -39,28 +39,39 @@ module note_player_tb();
         forever #5 clk = ~clk;
     end
 
+    initial begin
+    generate_next_sample = 0;
+    forever #10 generate_next_sample = ~generate_next_sample;
+    end 
     // Tests
     initial begin
+        #15
         play_enable = 1;
         note_to_load = 6'b000001;
         duration_to_load = 6'b000010;
         load_new_note = 0;
-        generate_next_sample = 0;
         
-        #10;
+        #50000;
+
+        note_to_load = 6'b001010;
+        duration_to_load = 6'b000100;
+        load_new_note = 1;
         
-        generate_next_sample = 1;
+        load_new_note = 1;
+        #10
+        load_new_note = 0;
         
-        #10;
+        #5000;
         
-        generate_next_sample = 0;
+        play_enable = 0;
         
-        #10;
+        #10000;
         
-        generate_next_sample = 1;
+        play_enable = 1;
         
-        #10;
+        #5000;
         
+        $stop;
 
     end
 

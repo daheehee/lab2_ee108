@@ -37,7 +37,9 @@ dffr #(.WIDTH(5)) state_status(.clk(clk), .r(reset), .d(new_state), .q(state));
 
 frequency_rom find_freq(.clk(clk), .addr(ref_note), .dout(step_size));
 
-sine_reader sine_read(.clk(clk), .reset(reset), .step_size(step_size), .generate_next(generate_next_sample), .sample_ready(new_sample_ready), .sample(sample_out));
+sine_reader sine_read(.clk(clk), .reset(reset), .step_size(step_size), .generate_next(generate_next_sample & play_enable), .sample_ready(new_sample_ready), .sample(sample_out));
+
+
 
 
 always @(*) begin
@@ -61,8 +63,8 @@ always @(*) begin
                     done_with_note = 0;
                     new_state = `LOAD;
                 end
-                else if (ref_dur == 1) begin
-                    new_dur = 0;
+                else if (ref_dur == 0) begin
+                    new_dur = new_dur;
                     done_with_note = 1;
                     new_state = `DONE; //we are done with the note, we must pause our operations
                 end
