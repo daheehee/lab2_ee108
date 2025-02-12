@@ -192,8 +192,8 @@ module song_reader(
                 default: begin
                     next_address = address;
                     new_note = 1;
-                    note = 6'd0;
-                    duration = 6'd12;
+                    note = note_data[11:6];
+                    duration = note_data[5:0];
                     song_done = 0;
                 end
                 

@@ -14,8 +14,7 @@ module note_player(
 );
 
 wire [5:0] ref_note;
-wire [5:0] new_note;
-assign new_note = (load_new_note) ?  note_to_load : (ref_note || note_to_load);
+reg [5:0] new_note;
 dffr #(.WIDTH(6)) note_change(.clk(clk), .r(reset), .d(new_note), .q(ref_note));
 
 wire [5:0] ref_dur;
@@ -41,6 +40,11 @@ always @(*) begin
         1'b1: new_dur = ref_dur + 6'b000001;
         1'b0: new_dur = ref_dur;
         default: new_dur = 6'b0;
+    endcase
+    case (load_new_note)
+        1'b1: new_note = note_to_load;
+        1'b0: new_note = ref_note;
+        default: new_note = note_to_load;
     endcase
 end
 
