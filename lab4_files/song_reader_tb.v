@@ -22,7 +22,7 @@ module song_reader_tb();
     initial begin
         clk = 1'b0;
         reset = 1'b1;
-        repeat (4) #5 clk = ~clk;
+        repeat (3) #5 clk = ~clk;
         reset = 1'b0;
         forever #5 clk = ~clk;
     end
@@ -33,14 +33,21 @@ module song_reader_tb();
         song = 2'b00;
         play = 1;
         note_done = 0;
-        #20
+        #35
         note_done = 1;
-        forever #15 note_done = ~note_done;
+        #10
+        note_done = 0;
+        #50
+        while (!song_done) begin
+            #10 note_done = ~note_done;
+        end
         
         #100 // test wrap-around
         song = 2'b11;
-        #1000;
-        
+        while (!song_done) begin
+            #10 note_done = ~note_done;
+        end
+        $stop;
         
         
         
@@ -48,5 +55,4 @@ module song_reader_tb();
     end
 
 endmodule
-
 

@@ -32,7 +32,7 @@ module note_player_tb();
 
     // Clock and reset
     initial begin
-        clk = 1'b0;
+        clk = 1'b1;
         reset = 1'b1;
         repeat (4) #5 clk = ~clk;
         reset = 1'b0;
@@ -45,10 +45,14 @@ module note_player_tb();
     end 
     // Tests
     initial begin
-        #15
+        #20
         play_enable = 1;
         note_to_load = 6'b000001;
         duration_to_load = 6'b000010;
+        load_new_note = 1;
+        
+        #10
+        
         load_new_note = 0;
         
         #50000;
@@ -71,7 +75,7 @@ module note_player_tb();
         
         #5000;
         
-        $stop;
+        $finish;
 
     end
 

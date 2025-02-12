@@ -27,7 +27,7 @@ module song_reader(
     // instantiate flip flops
     reg [4:0] next_state;
     wire [4:0] state;
-    dffre #(.WIDTH(7)) state_reg(.clk(clk), .r(reset), .en(play), .d(next_state), .q(state)); // the value of state can only change when play==1
+    dffre #(.WIDTH(5)) state_reg(.clk(clk), .r(reset), .en(play), .d(next_state), .q(state)); // the value of state can only change when play==1
     
     reg [6:0] next_address;
     dffre #(.WIDTH(7)) address_reg(.clk(clk), .r(reset), .en(note_done), .d(next_address), .q(address));
@@ -203,4 +203,3 @@ module song_reader(
     
 
 endmodule
-

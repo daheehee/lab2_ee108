@@ -51,6 +51,8 @@ module sine_reader(
     always @(*) begin
         if (reset) begin
             next_addr = 22'b0;
+            sample = sine_rom_output1;
+            sine_rom_input = cur_addr[19:10];
             //sample = 16'b0;
         end
         else begin         
@@ -75,6 +77,7 @@ module sine_reader(
                 default: begin 
                     sine_rom_input = cur_addr[19:10];
                     sample = sine_rom_output1;
+                    next_addr = cur_addr;
                 end
             endcase
         end

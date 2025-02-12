@@ -26,14 +26,13 @@ module mcu_tb();
     // Tests
     initial begin
         //testing play song 
-        #20
+        #25
         play_button = 1; 
         next_button = 0;
         song_done = 0;
         #10; 
         play_button = 0; 
         #10;
-        $display ("play %b should be 1", play);
         
         //testing play song 2nd time (pause)
         play_button = 1; 
@@ -41,8 +40,7 @@ module mcu_tb();
         song_done = 0;
         #10; 
         play_button = 0;
-        #10
-        $display ("play %b should be 0", play);
+        #10;
         
         //testing play song again
         play_button = 1; 
@@ -51,7 +49,6 @@ module mcu_tb();
         #10; 
         play_button = 0;
         #10
-        $display ("play %b should be 1", play);
         
         
         //testing next song
@@ -59,8 +56,7 @@ module mcu_tb();
         next_button = 1;                  
         song_done = 0;                    
         #10;                              
-        next_button = 0;  
-        $display ("reset_player %b should be 1", reset_player);                
+        next_button = 0;             
         #10                               
         
         //testing play song
@@ -70,7 +66,6 @@ module mcu_tb();
         #10;                              
         play_button = 0;                  
         #10                               
-        $display ("play %b should be 1", play);
         
         //testing play song and next song at the same time 
         play_button = 1;                  
@@ -80,14 +75,12 @@ module mcu_tb();
         play_button = 0;                          
         next_button = 0;                  
         #10                               
-        $display ("nothing should happen");
         
         //testing song done
         play_button = 0;                  
         next_button = 0;                  
         song_done = 1;                    
-        #10;
-        $display ("look at wave graph", reset_player, play);                              
+        #10;                            
         song_done = 0;                  
         #20                               
         
@@ -98,8 +91,20 @@ module mcu_tb();
         #10; 
         play_button = 0;
         #10
-        $display ("play %b should be 1", play);
         
+        //skipping songs
+        next_button = 1;
+        #10
+        next_button = 0;
+        #10
+        next_button = 1;
+        #10
+        next_button = 0;
+        #10
+        next_button = 1;
+        #10
+        next_button = 0;
+        #10;
     end
 
 endmodule
