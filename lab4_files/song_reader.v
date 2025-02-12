@@ -5,201 +5,86 @@ module song_reader(
     input [1:0] song,
     input note_done,
     output reg song_done,
-    output reg [5:0] note,
-    output reg [5:0] duration,
+    output [5:0] note,
+    output [5:0] duration,
     output reg new_note
 );
 
-    // Implementation goes here!
-    
     // define states
-    `define STATE_PAUSE             5'b1        // begins paused. also stays in this state when we are waiting for the next song from mcu.
-    `define STATE_SONG_0            5'b10       // the first 32 bits in song_rom which store song 0
-    `define STATE_SONG_1            5'b100      // the second 32 bits in song_rom which store song 1
-    `define STATE_SONG_2            5'b1000     // the middle 32 bits in song_rom which store song 2
-    `define STATE_SONG_3            5'b10000    // the final 32 bits in song_rom which store song 3
-    
-    // instantiate song_rom
-    wire [6:0] address; // there are 128 addresses in total, and 2^7=128
-    wire [11:0] note_data; // data[11:6] = note; data[5:0] = duration
-    song_rom db(.clk(clk), .addr(address), .dout(note_data));
-    
-    // instantiate flip flops
-    reg [4:0] next_state;
-    wire [4:0] state;
-    dffre #(.WIDTH(5)) state_reg(.clk(clk), .r(reset), .en(play), .d(next_state), .q(state)); // the value of state can only change when play==1
-    
-    reg [6:0] next_address;
-    dffre #(.WIDTH(7)) address_reg(.clk(clk), .r(reset), .en(note_done), .d(next_address), .q(address));
-    
-    // sequential logic begins here
-    always @(*) begin
-        if (reset == 1) begin
-            next_state = `STATE_PAUSE;
-            next_address = 7'd0;
-            new_note = 0; // default is 0, so we only tell it to play a new note during the clock cycle where we are in the correct song state
-            note = note_data[11:6];
-            duration = note_data[5:0];
-            song_done = 0;
-        end
-        else begin
-            case(state)
-                `STATE_PAUSE: begin
-                    if (play == 1) begin
-                        // switch to state corresponding to 'song' input from mcu
-                        if (song == 2'b00) begin 
-                            next_state = `STATE_SONG_0;
-                        end
-                        else if (song == 2'b01) begin 
-                            next_state = `STATE_SONG_1;
-                        end
-                        else if (song == 2'b10) begin 
-                            next_state = `STATE_SONG_2;
-                        end
-                        else if (song == 2'b11) begin 
-                            next_state = `STATE_SONG_3;
-                        end
-                        // if 'song' input is invalid, do nothing
-                        else begin 
-                            next_state = `STATE_PAUSE;
-                        end
-                    end
-                    else begin // play == 0
-                        next_state = `STATE_PAUSE;
-                    end
-                    // protecting against inferred latches
-                    next_address = address;
-                    new_note = 0; // pause state, so we dont want note player to latch onto anything
-                    note = note_data[11:6];
-                    duration = note_data[5:0];
-                    song_done = 0;
-                end
-                
-                `STATE_SONG_0: begin
-                    // if note is done playing
-                    if (note_done == 1) begin   
-                        if (address == 7'd31) begin // final note in song
-                            next_state = `STATE_SONG_1; // skip to next song
-                            song_done = 1;
-                            new_note = 0;
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        else begin // TODO: might need ot add separate case for first note
-                            next_state = `STATE_SONG_0;
-                            song_done = 0;
-                            new_note = 1; // we are sending note_player a new address worth of data, so we want it to latch on
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        next_address = address + 7'd1; // increment for next round
-                    end
-                    // if note is still playing
-                    else begin
-                        next_state = `STATE_SONG_0; // don't do anything
-                        new_note = 0; // once note_player already knows to start playing that note, turn it off until a new npte comes around
-                        next_address = address;
-                        note = note_data[11:6];
-                        duration = note_data[5:0];
-                        song_done = 0;
-                    end
-                end
-                
-                `STATE_SONG_1: begin
-                    if (note_done == 1) begin
-                        if (address == 7'd63) begin
-                            next_state = `STATE_SONG_2; 
-                            song_done = 1;
-                            new_note = 0;
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        else begin
-                            next_state = `STATE_SONG_1;
-                            song_done = 0;
-                            new_note = 1; 
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        next_address = address + 7'd1;
-                    end
-                    else begin
-                        next_state = `STATE_SONG_1; 
-                        new_note = 0; 
-                        next_address = address;
-                        note = note_data[11:6];
-                        duration = note_data[5:0];
-                        song_done = 0;
-                    end
-                end
-                
-                `STATE_SONG_2: begin
-                    if (note_done == 1) begin
-                        if (address == 7'd95) begin
-                            next_state = `STATE_SONG_3; 
-                            song_done = 1;
-                            new_note = 0;
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        else begin
-                            next_state = `STATE_SONG_2;
-                            song_done = 0;
-                            new_note = 1; 
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        next_address = address + 7'd1;
-                    end
-                    else begin
-                        next_state = `STATE_SONG_2; 
-                        new_note = 0; 
-                        next_address = address;
-                        note = note_data[11:6];
-                        duration = note_data[5:0];
-                        song_done = 0;
-                    end
-                end
-                
-                `STATE_SONG_3: begin
-                    if (note_done == 1) begin
-                        if (address == 7'd127) begin
-                            next_state = `STATE_SONG_0; // wrap around
-                            song_done = 1;
-                            new_note = 0;
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        else begin
-                            next_state = `STATE_SONG_3;
-                            song_done = 0;
-                            new_note = 1; 
-                            note = note_data[11:6];
-                            duration = note_data[5:0];
-                        end
-                        next_address = address + 7'd1;
-                    end
-                    else begin
-                        next_state = `STATE_SONG_3; 
-                        new_note = 0;
-                        next_address = address;
-                        note = note_data[11:6];
-                        duration = note_data[5:0];
-                        song_done = 0;
-                    end
-                end
-                
-                default: begin
-                    next_address = address;
-                    new_note = 1;
-                    note = note_data[11:6];
-                    duration = note_data[5:0];
-                    song_done = 0;
-                end
-                
-            endcase
-        end
-    end
-    
+    `define STATE_IDLE_0       3'b000 
+    `define STATE_NOTE_IN      3'b001
+    `define STATE_IDLE_1       3'b010
+    `define STATE_NOTE_OUT     3'b011
+    `define STATE_IDLE_2       3'b100
 
+
+    // instantiate flip flops
+	wire [6:0] address;
+	wire [11:0] note_data;
+	song_rom db(.clk(clk), .addr(address), .dout(note_data));
+
+	reg [2:0] next_state;
+	wire [2:0] state;
+	dffr #(.WIDTH(3)) state_reg(.clk(clk), .r(reset), .d(next_state), .q(state));
+	
+	reg [4:0] next_note;
+	wire [4:0] note_now;
+	dffr #(.WIDTH(5)) note_reg(.clk(clk),.r(reset), .d(next_note), .q(note_now));
+	
+	// assign statements
+    assign address = {song, note_now};
+    assign {note, duration} = note_data;
+	
+	always @(*) begin
+		case(state)
+			`STATE_IDLE_0 : begin
+			    song_done = 0; 
+				new_note = 0;
+				next_state = `STATE_NOTE_OUT;
+				next_note = note_now;
+			 end
+			`STATE_NOTE_IN : begin
+			     song_done = (note_now == 5'd31) ? 1:0;
+			     new_note = 0;
+			     next_note = note_now + 5'd1;
+			     next_state = `STATE_IDLE_1;
+			 end
+			`STATE_IDLE_1 : begin
+			     song_done = 0;
+			     new_note = 0;
+			     next_note = note_now;
+			     if (play == 1) begin
+			         next_state = `STATE_NOTE_OUT;
+                 end
+                 else begin
+                    next_state = `STATE_IDLE_1;
+                 end
+			 end
+			`STATE_NOTE_OUT : begin
+			     song_done = 0;
+			     new_note = 1;
+			     next_note = note_now;
+			     next_state = `STATE_IDLE_2;
+			 end
+			`STATE_IDLE_2 : begin
+			     song_done = 0;
+			     new_note = 0;
+			     next_note = note_now;
+			     if (note_done == 1) begin
+			         next_state = `STATE_NOTE_IN;
+                 end
+                 else begin
+                    next_state = `STATE_IDLE_2;
+                 end
+			 end
+			 
+			 default : begin
+			    song_done = 0;
+			    new_note = 0;
+			    next_note = note_now;
+				next_state = state;
+			 end 
+		endcase
+	end
+    
 endmodule
