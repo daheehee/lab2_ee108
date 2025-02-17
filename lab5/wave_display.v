@@ -1,8 +1,8 @@
 module wave_display (
     input clk,
     input reset,
-    input [10:0] x,  // [0..1279]
-    input [9:0]  y,  // [0..1023]
+    input [10:0] x,  
+    input [9:0]  y, 
     input valid,
     input [7:0] read_value,
     input read_index,
@@ -15,14 +15,16 @@ module wave_display (
 
 // Implement me!
 
-// Flip Flops
-dffr #(.WIDTH(8)) value_reg (.r(reset), .clk(clk), .d(read_value), .q(value));
-
 // Internal Signals
-reg [8:0] prev_addr;
+wire [8:0] prev_addr;
 reg [8:0] addr_reg;
 reg valid_pixel_reg;
 reg display;
+wire value;
+
+// Flip Flops
+dffre #(.WIDTH(8)) value_ff (.r(reset), .clk(clk), .en(~(prev_addr == read_address)), .d(read_value), .q(value));
+dffr #(.WIDTH(9)) addr_ff (.r(reset), .clk(clk), .d(addr_reg), .q(prev_addr));
 
 always @(*) begin
     // Process X- and Y- coordinate inputs
@@ -34,10 +36,10 @@ always @(*) begin
         default: addr_reg = 9'b0; // If not in quadrant 2 or 3
     endcase
     
-    case (prev_addr == addr_reg) 
+    case (prev_addr == read_address) 
         1'b1: begin // Only when the address changes do we accept a new sample from RAM
             // if Y RAM value is between RAM[X-1] and RAM[X]
-            if (((value < y[8:1]) && (y[8:1] < read_value)) || ((read_value < y[8:1]) && (y[8:1] < value))) display = 1;
+            if (((value <= y[8:1]) && (y[8:1] <= read_value)) || ((read_value <= y[8:1]) && (y[8:1] <= value))) display = 1;
             else display = 0;
         end
         default display = 0;
