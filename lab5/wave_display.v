@@ -15,11 +15,6 @@ module wave_display (
 
 // Implement me!
 
-// Colour of displayed wave
-assign r = 8'hFF;
-assign g = 8'hFF;
-assign b = 8'hFF;
-
 // Flip Flops
 dffr #(.WIDTH(8)) value_reg (.r(reset), .clk(clk), .d(read_value), .q(value));
 
