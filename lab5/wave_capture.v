@@ -53,6 +53,7 @@ always @(*) begin
     else begin
         case (state) 
             `STATE_ARMED: begin
+                write_enable = 1'b0;
                 next_counter=0;
                // instead of doing (cur_sample < 0 && new_sample_in > 0)... only look at 1st bit to see if pos or neg
                 //if (new_sample_ready && cur_sample[15] == 1 && new_sample_in[15] == 0) begin
@@ -64,7 +65,6 @@ always @(*) begin
                 end
               end
              `STATE_ACTIVE: begin
-                //next_addr = {~read_index, counter};
                 if (counter != 8'b11111111) begin
                   next_counter = counter+1; 
                   write_enable = 1'b1; 
@@ -76,17 +76,20 @@ always @(*) begin
                    next_state = `STATE_WAIT;
                 end
                 else begin
-                    write_enable = 1'b0;
+                    //write_enable = 1'b0;
                     next_state = `STATE_ACTIVE;
                     
                 end
               end
             `STATE_WAIT: begin
-                read_index = ~read_index;
+                write_enable = 1'b0;
+              
                 if (wave_display_idle == 1) begin
+                    read_index = ~read_index;
                     next_state = `STATE_ARMED;
                 end
                 else begin
+                    read_index = read_index;
                     next_state = `STATE_WAIT;
                 end
             end
