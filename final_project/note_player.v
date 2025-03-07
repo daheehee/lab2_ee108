@@ -34,7 +34,7 @@ module note_player(
 
     sine_reader sine_read(
         .clk(clk),
-        .reset(reset),
+        .reset(reset || (state == 6'b0) && beat),
         .step_size(step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
