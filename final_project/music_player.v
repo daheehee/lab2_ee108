@@ -199,6 +199,25 @@ module music_player(
     //dffr #(.WIDTH(16)) pipeline_ff_sample_out (.clk(clk), .r(reset), .d(sample_out0), .q(sample_out));
     assign sample_out = sample_out0;
     
+    codec_conditioner codec_conditioner(
+        .clk(clk),
+        .reset(reset),
+        .new_sample_in(note_sample_final),
+        
+        .latch_new_sample_in(|note_sample_ready),
+        .generate_next_sample(generate_next_sample0),
+        
+        .new_frame(new_frame),
+        .valid_sample(sample_out0)
+    );
+    
+//  
+//  ****************************************************************************
+//      Extensions
+//  ****************************************************************************
+
+    
+//  ** Chords
     wire signed [18:0]sum;     
     reg signed [15:0] note_signed1, note_signed2, note_signed3;
     
@@ -228,22 +247,11 @@ module music_player(
    end
    
     
-    
     wire signed [15:0] note_sample_final;
     assign note_sample_final = note_signed1 + note_signed2 + note_signed3;
     assign new_sample_generated0 = generate_next_sample;
     
-    codec_conditioner codec_conditioner(
-        .clk(clk),
-        .reset(reset),
-        .new_sample_in(note_sample_final),
-        
-        .latch_new_sample_in(|note_sample_ready),
-        .generate_next_sample(generate_next_sample0),
-        
-        .new_frame(new_frame),
-        .valid_sample(sample_out0)
-    );
+// ** Dynamics
 
 
 endmodule
