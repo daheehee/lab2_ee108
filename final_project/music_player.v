@@ -62,8 +62,9 @@ module music_player(
     wire [17:0] note_to_play;
     wire [5:0] time_dur; 
     wire [17:0] duration_for_note;
+    wire [8:0] voicing;
     wire [3:0] new_note;
-    wire [3:0] note_done;
+    wire [2:0] note_done;
     
     //instantiate mult
     song_reader song_reader(
@@ -72,9 +73,9 @@ module music_player(
         .play(play),
         .song(current_song),
         .song_done(song_done),
-        .time_dur(time_dur), //output
         .note(note_to_play),
         .duration(duration_for_note),
+        .voicing(voicing), //special
         .new_note(new_note),
         .note_done(note_done)
     );
@@ -88,25 +89,48 @@ module music_player(
     wire generate_next_sample;
     wire generate_next_sample0;
     reg [17:0] note_sample;
-    wire [15:0] note_sample1, note_sample2, note_sample3, time_sample;
-    wire [15:0] note_sample10, note_sample20, note_sample30, time_sample0;
+    wire [15:0] time_sample;
+    wire [15:0] note_sample1_1, note_sample1_2, note_sample1_3, note_sample1_4, note_sample1_5;
+    wire [15:0] note_sample2_1, note_sample2_2, note_sample2_3, note_sample2_4, note_sample2_5;
+    wire [15:0] note_sample3_1, note_sample3_2, note_sample3_3, note_sample3_4, note_sample3_5;
+    
+    wire [15:0] note_sample10_1, note_sample10_2, note_sample10_3, note_sample10_4, note_sample10_5;
+    wire [15:0] note_sample20_1, note_sample20_2, note_sample20_3, note_sample20_4, note_sample20_5;
+    wire [15:0] note_sample30_1, note_sample30_2, note_sample30_3, note_sample30_4, note_sample30_5;
     
     wire note_sample_ready1, note_sample_ready2, note_sample_ready3, time_ready;
     wire note_sample_ready10, note_sample_ready20, note_sample_ready30, time_ready_0;
 
     // These pipeline registers were added to decrease the length of the critical path!
     dffr pipeline_ff_gen_next_sample1(.clk(clk), .r(reset), .d(generate_next_sample0), .q(generate_next_sample));
-    dffr #(.WIDTH(16)) pipeline_ff_note_sample (.clk(clk), .r(reset), .d(note_sample10), .q(note_sample1));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample1_1(.clk(clk), .r(reset), .d(note_sample10_1), .q(note_sample1_1));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample1_2(.clk(clk), .r(reset), .d(note_sample10_2), .q(note_sample1_2));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample1_3(.clk(clk), .r(reset), .d(note_sample10_3), .q(note_sample1_3));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample1_4(.clk(clk), .r(reset), .d(note_sample10_4), .q(note_sample1_4));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample1_5(.clk(clk), .r(reset), .d(note_sample10_5), .q(note_sample1_5));
     dffr pipeline_ff_new_sample_ready (.clk(clk), .r(reset), .d(note_sample_ready10), .q(note_sample_ready1));
     
-    dffr #(.WIDTH(16)) pipeline_ff_note_sample2 (.clk(clk), .r(reset), .d(note_sample20), .q(note_sample2));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample2_1(.clk(clk), .r(reset), .d(note_sample20_1), .q(note_sample2_1));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample2_2(.clk(clk), .r(reset), .d(note_sample20_2), .q(note_sample2_2));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample2_3(.clk(clk), .r(reset), .d(note_sample20_3), .q(note_sample2_3));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample2_4(.clk(clk), .r(reset), .d(note_sample20_4), .q(note_sample2_4));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample2_5(.clk(clk), .r(reset), .d(note_sample20_5), .q(note_sample2_5));
     dffr pipeline_ff_new_sample_ready2 (.clk(clk), .r(reset), .d(note_sample_ready20), .q(note_sample_ready2));
 
-    dffr #(.WIDTH(16)) pipeline_ff_note_sample3 (.clk(clk), .r(reset), .d(note_sample30), .q(note_sample3));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample3_1(.clk(clk), .r(reset), .d(note_sample30_1), .q(note_sample3_1));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample3_2(.clk(clk), .r(reset), .d(note_sample30_2), .q(note_sample3_2));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample3_3(.clk(clk), .r(reset), .d(note_sample30_3), .q(note_sample3_3));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample3_4(.clk(clk), .r(reset), .d(note_sample30_4), .q(note_sample3_4));
+    dffr #(.WIDTH(16)) pipeline_ff_note_sample3_5(.clk(clk), .r(reset), .d(note_sample30_5), .q(note_sample3_5));
     dffr pipeline_ff_new_sample_ready3 (.clk(clk), .r(reset), .d(note_sample_ready30), .q(note_sample_ready3));
 
     dffr #(.WIDTH(16)) pipeline_ff_note_sample4 (.clk(clk), .r(reset), .d(time_sample0), .q(time_sample));
     dffr pipeline_ff_new_sample_ready4 (.clk(clk), .r(reset), .d(time_ready_0), .q(time_ready));
+
+
+
+
+// note player instantiation
 
     note_player note_player1(
         .clk(clk),
@@ -118,7 +142,11 @@ module music_player(
         .done_with_note(note_done[0]),
         .beat(beat),
         .generate_next_sample(generate_next_sample),
-        .sample_out(note_sample10),
+        .sample_out_1(note_sample10_1),
+        .sample_out_2(note_sample10_2),
+        .sample_out_3(note_sample10_3),
+        .sample_out_4(note_sample10_4),
+        .sample_out_5(note_sample10_5),
         .new_sample_ready(note_sample_ready10)
     );
     
@@ -132,7 +160,11 @@ module music_player(
         .done_with_note(note_done[1]),
         .beat(beat),
         .generate_next_sample(generate_next_sample),
-        .sample_out(note_sample20),
+        .sample_out_1(note_sample20_1),
+        .sample_out_2(note_sample20_2),
+        .sample_out_3(note_sample20_3),
+        .sample_out_4(note_sample20_4),
+        .sample_out_5(note_sample20_5),
         .new_sample_ready(note_sample_ready20)
     );
     
@@ -148,29 +180,17 @@ module music_player(
         
         .beat(beat),
         .generate_next_sample(generate_next_sample),
-        .sample_out(note_sample30),
+        .sample_out_1(note_sample30_1),
+        .sample_out_2(note_sample30_2),
+        .sample_out_3(note_sample30_3),
+        .sample_out_4(note_sample30_4),
+        .sample_out_5(note_sample30_5),
         .new_sample_ready(note_sample_ready30)
     );
     
-    note_player time_dur_player(
-        .clk(clk),
-        .reset(reset),
-        .play_enable(play),
-        
-        .note_to_load(6'b0),
-        .duration_to_load(time_dur),
-        
-        .load_new_note(new_note[3]),
-        .done_with_note(note_done[3]),
-        
-        .beat(beat),
-        .generate_next_sample(generate_next_sample),
-        .sample_out(time_sample0),
-        .new_sample_ready(time_ready_0)
-    );
     
-    wire [3:0] note_sample_ready;
-    assign note_sample_ready = {note_sample_ready1, note_sample_ready2, note_sample_ready3, time_ready};
+    wire [2:0] note_sample_ready;
+    assign note_sample_ready = {note_sample_ready1, note_sample_ready2, note_sample_ready3};
     
 //   
 //  ****************************************************************************
@@ -199,25 +219,6 @@ module music_player(
     //dffr #(.WIDTH(16)) pipeline_ff_sample_out (.clk(clk), .r(reset), .d(sample_out0), .q(sample_out));
     assign sample_out = sample_out0;
     
-    codec_conditioner codec_conditioner(
-        .clk(clk),
-        .reset(reset),
-        .new_sample_in(note_sample_final),
-        
-        .latch_new_sample_in(|note_sample_ready),
-        .generate_next_sample(generate_next_sample0),
-        
-        .new_frame(new_frame),
-        .valid_sample(sample_out0)
-    );
-    
-//  
-//  ****************************************************************************
-//      Extensions
-//  ****************************************************************************
-
-    
-//  ** Chords
     wire signed [18:0]sum;     
     reg signed [15:0] note_signed1, note_signed2, note_signed3;
     
@@ -245,13 +246,23 @@ module music_player(
             end
         endcase
    end
-   
+
     
     wire signed [15:0] note_sample_final;
     assign note_sample_final = note_signed1 + note_signed2 + note_signed3;
     assign new_sample_generated0 = generate_next_sample;
     
-// ** Dynamics
+    codec_conditioner codec_conditioner(
+        .clk(clk),
+        .reset(reset),
+        .new_sample_in(note_sample_final),
+        
+        .latch_new_sample_in(|note_sample_ready),
+        .generate_next_sample(generate_next_sample0),
+        
+        .new_frame(new_frame),
+        .valid_sample(sample_out0)
+    );
 
 
 endmodule
