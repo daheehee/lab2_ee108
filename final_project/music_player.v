@@ -248,6 +248,7 @@ module music_player(
    end
 
     
+    
     wire signed [15:0] note_sample_final;
     assign note_sample_final = note_signed1 + note_signed2 + note_signed3;
     assign new_sample_generated0 = generate_next_sample;
