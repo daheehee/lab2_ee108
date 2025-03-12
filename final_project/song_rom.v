@@ -15,7 +15,7 @@ module song_rom (
 	assign memory[	  2	] =	{1'b0,6'd0, 6'd24,3'd0};	// Note: 4G
 	assign memory[	  3	] =	{ 1'b1, 6'd24, 9'b0};	// Note: Rest
 	assign memory[	  4	] =	{1'b0,6'd40, 6'd10,3'd0};	// Note: Rest
-	assign memory[	  5	] =	{1'b0,6'd42, 6'd10,3'd0};	// Note: Rest
+	assign memory[	  5	] =	{1'b0,6'd0, 6'd10,3'd0};	// Note: Rest
 	assign memory[	  6	] =	{1'b0,6'd0, 6'd10,3'd0};	// Note: Rest
 	assign memory[	  7	] =	{ 1'b1, 6'd10, 9'b0};	// Note: Rest
 	assign memory[	  8	] =	{1'b0,6'd40, 6'd24,3'd0};	// Note: Rest

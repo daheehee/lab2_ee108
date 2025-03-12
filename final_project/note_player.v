@@ -16,7 +16,7 @@ module note_player(
     output new_sample_ready  // Tells the codec when we've got a sample
 );
 
-    wire [19:0] step_size;
+    wire [24:0] step_size;
     wire [5:0] freq_rom_in;
 
     wire [15:0] inter_1;  // Our sample output
@@ -54,7 +54,7 @@ module note_player(
     sine_reader sine_read_2(
         .clk(clk),
         .reset(reset),
-        .step_size(2*step_size),
+        .step_size(6'd2 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
         .sample(inter_2)
@@ -64,7 +64,7 @@ module note_player(
     sine_reader sine_read_3(
         .clk(clk),
         .reset(reset),
-        .step_size(3*step_size),
+        .step_size(6'd3 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
         .sample(inter_3)
@@ -74,7 +74,7 @@ module note_player(
     sine_reader sine_read_4(
         .clk(clk),
         .reset(reset),
-        .step_size(4*step_size),
+        .step_size(6'd4 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
         .sample(inter_4)
@@ -84,7 +84,7 @@ module note_player(
     sine_reader sine_read_5(
         .clk(clk),
         .reset(reset),
-        .step_size(5*step_size),
+        .step_size(6'd5 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
         .sample(inter_5)
@@ -93,10 +93,10 @@ module note_player(
 
     //adjust amplitude of higher harmonics
     assign sample_out_1 = inter_1;
-    assign sample_out_2 = inter_2[15] ? -((-inter_2 + 1'b1)/16'd2)+1'b1 : (inter_2)/16'd2;
-    assign sample_out_3 = inter_3[15] ? -((-inter_3 + 1'b1)/16'd3)+1'b1 : (inter_3)/16'd3;
-    assign sample_out_4 = inter_4[15] ? -((-inter_4 + 1'b1)/16'd4)+1'b1 : (inter_4)/16'd4;
-    assign sample_out_5 = inter_5[15] ? -((-inter_5 + 1'b1)/16'd5)+1'b1 : (inter_5)/16'd5;
+    assign sample_out_2 = inter_2;
+    assign sample_out_3 = inter_3;
+    assign sample_out_4 = inter_4;
+    assign sample_out_5 = inter_5;
     
     
     

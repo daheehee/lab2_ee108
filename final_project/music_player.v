@@ -63,7 +63,7 @@ module music_player(
     wire [5:0] time_dur; 
     wire [17:0] duration_for_note;
     wire [8:0] voicing;
-    wire [3:0] new_note;
+    wire [2:0] new_note;
     wire [2:0] note_done;
     
     //instantiate mult
@@ -89,7 +89,7 @@ module music_player(
     wire generate_next_sample;
     wire generate_next_sample0;
     reg [17:0] note_sample;
-    wire [15:0] time_sample;
+    wire [15:0] time_sample, time_sample0;
     wire [15:0] note_sample1_1, note_sample1_2, note_sample1_3, note_sample1_4, note_sample1_5;
     wire [15:0] note_sample2_1, note_sample2_2, note_sample2_3, note_sample2_4, note_sample2_5;
     wire [15:0] note_sample3_1, note_sample3_2, note_sample3_3, note_sample3_4, note_sample3_5;
@@ -202,7 +202,7 @@ module music_player(
 //  
     beat_generator #(.WIDTH(10), .STOP(BEAT_COUNT)) beat_generator(
         .clk(clk),
-        .reset(reset | new_note | play_button),
+        .reset(reset | |new_note | play_button),
         .en(generate_next_sample),
         .beat(beat)
     );
@@ -221,23 +221,41 @@ module music_player(
     
     wire signed [18:0]sum;     
     reg signed [15:0] note_signed1, note_signed2, note_signed3;
+    wire [5:0]amplitude_total;
+    dynamics dynamite(.voicing(voicing[2:0]), .clk(clk), .reset(reset), .beat(beat), .amplitude_total(amplitude_total));
+    
+    wire[5:0] amplitude_1,amplitude_2,amplitude_3,amplitude_4,amplitude_5;
+    wire [15:0] note_sample_harm_1, note_sample_harm_2, note_sample_harm_3;
+    
+    
+    //allow for different harmonics for each note, but too much work rn so will do later
+    harmonics harms(.voicing(voicing[2:0]),.amplitude_1(amplitude_1), .amplitude_2(amplitude_2), .amplitude_3(amplitude_3),.amplitude_4(amplitude_4),.amplitude_5(amplitude_5));
+    
+    harmonics_adding note1(.note_harm1(note_sample1_1), .note_harm2(note_sample1_2), .note_harm3(note_sample1_3), .note_harm4(note_sample1_4), .note_harm5(note_sample1_5), .amp_1(amplitude_1), .amp_2(amplitude_2), .amp_3(amplitude_3),.amp_4(amplitude_4), .amp_5(amplitude_5), .note_with_harms(note_sample_harm_1));
+    harmonics_adding note2(.note_harm1(note_sample2_1), .note_harm2(note_sample2_2), .note_harm3(note_sample2_3), .note_harm4(note_sample2_4), .note_harm5(note_sample2_5), .amp_1(amplitude_1), .amp_2(amplitude_2), .amp_3(amplitude_3),.amp_4(amplitude_4), .amp_5(amplitude_5), .note_with_harms(note_sample_harm_2));
+    harmonics_adding note3(.note_harm1(note_sample3_1), .note_harm2(note_sample3_2), .note_harm3(note_sample3_3), .note_harm4(note_sample3_4), .note_harm5(note_sample3_5), .amp_1(amplitude_1), .amp_2(amplitude_2), .amp_3(amplitude_3),.amp_4(amplitude_4), .amp_5(amplitude_5), .note_with_harms(note_sample_harm_3));
+    
+    wire [15:0] note_sample_harm__adj1, note_sample_harm__adj2, note_sample_harm__adj3;
+    assign note_sample_harm__adj1 = note_sample_harm_1[15] ? -((-note_sample_harm_1 + 1'b1) * (amplitude_total / 6'd60))+1'b1 : (note_sample_harm_1) * (amplitude_total / 6'd60);
+    assign note_sample_harm__adj2 = note_sample_harm_2[15] ? -((-note_sample_harm_2 + 1'b1) * (amplitude_total / 6'd60))+1'b1 : (note_sample_harm_2) * (amplitude_total / 6'd60);
+    assign note_sample_harm__adj3 = note_sample_harm_3[15] ? -((-note_sample_harm_3 + 1'b1) * (amplitude_total / 6'd60))+1'b1 : (note_sample_harm_3) * (amplitude_total / 6'd60);
     
     always @(*) begin
-        case(|note_sample3+ |note_sample2 + (|note_sample1)) //how many of these ntoes are not 0?
+        case(|note_sample_harm__adj3 + |note_sample_harm__adj2 + |note_sample_harm__adj1) //how many of these ntoes are not 0?
             2'd3: begin
-            note_signed1 = note_sample1[15] ? -((-note_sample1 + 1'b1)/3'd3)+1'b1 : (note_sample1)/3'd3;
-            note_signed2 = note_sample2[15] ? -((-note_sample2 + 1'b1)/3'd3)+1'b1 : (note_sample2)/3'd3;
-            note_signed3 = note_sample3[15] ? -((-note_sample3 + 1'b1)/3'd3)+1'b1 : (note_sample3)/3'd3;
+            note_signed1 = note_sample_harm__adj1[15] ? -((-note_sample_harm__adj1 + 1'b1)/3'd3)+1'b1 : (note_sample_harm__adj1)/3'd3;
+            note_signed2 = note_sample_harm__adj2[15] ? -((-note_sample_harm__adj2 + 1'b1)/3'd3)+1'b1 : (note_sample_harm__adj2)/3'd3;
+            note_signed3 = note_sample_harm__adj3[15] ? -((-note_sample_harm__adj3 + 1'b1)/3'd3)+1'b1 : (note_sample_harm__adj3)/3'd3;
             end
             2'd2: begin
-            note_signed1 = note_sample1[15] ? -((-note_sample1 + 1'b1)/3'd2)+1'b1 : (note_sample1)/3'd2;
-            note_signed2 = note_sample2[15] ? -((-note_sample2 + 1'b1)/3'd2)+1'b1 : (note_sample2)/3'd2;
-            note_signed3 = note_sample3[15] ? -((-note_sample3 + 1'b1)/3'd2)+1'b1 : (note_sample3)/3'd2;
+            note_signed1 = note_sample_harm__adj1[15] ? -((-note_sample_harm__adj1 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj1)/3'd2;
+            note_signed2 = note_sample_harm__adj2[15] ? -((-note_sample_harm__adj2 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj2)/3'd2;
+            note_signed3 = note_sample_harm__adj3[15] ? -((-note_sample_harm__adj3 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj3)/3'd2;
             end
             2'd1: begin 
-            note_signed1 = note_sample1;
-            note_signed2 = note_sample2;
-            note_signed3 = note_sample3;
+            note_signed1 = note_sample_harm__adj1;
+            note_signed2 = note_sample_harm__adj2;
+            note_signed3 = note_sample_harm__adj3;
             end
             default: begin
             note_signed1 = 16'b0;
@@ -246,7 +264,7 @@ module music_player(
             end
         endcase
    end
-
+   
     
     
     wire signed [15:0] note_sample_final;
