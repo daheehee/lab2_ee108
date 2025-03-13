@@ -16,14 +16,20 @@ module note_player(
     output new_sample_ready  // Tells the codec when we've got a sample
 );
 
-    wire [24:0] step_size;
+    wire [19:0] step_size;
     wire [5:0] freq_rom_in;
 
-    wire [15:0] inter_1;  // Our sample output
-    wire [15:0] inter_2;
-    wire [15:0] inter_3;
-    wire [15:0] inter_4;
-    wire [15:0] inter_5;
+    wire [19:0] inter_1;  // Our sample output
+    wire [19:0] inter_2;
+    wire [19:0] inter_3;
+    wire [19:0] inter_4;
+    wire [19:0] inter_5;
+    
+    assign inter_1 = step_size[19] ? -((-step_size + 1'b1) * 5'd2)+1'b1 : (step_size * 5'd2);
+    assign inter_2 = step_size[19] ? -((-step_size + 1'b1) * 5'd2)+1'b1 : (step_size * 5'd2);
+    assign inter_3 = step_size[19] ? -((-step_size + 1'b1) * 5'd3)+1'b1 : (step_size * 5'd3);
+    assign inter_4 = step_size[19] ? -((-step_size + 1'b1) * 5'd4)+1'b1 : (step_size * 5'd4);
+    assign inter_4 = step_size[19] ? -((-step_size + 1'b1) * 5'd5)+1'b1 : (step_size * 5'd5);
     
     dffre #(.WIDTH(6)) freq_reg (
         .clk(clk),
@@ -44,10 +50,10 @@ module note_player(
     sine_reader sine_read_1(
         .clk(clk),
         .reset(reset),
-        .step_size(step_size),
+        .step_size(inter_1),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
-        .sample(inter_1)
+        .sample(sample_out_1)
     );
 
     
@@ -57,7 +63,7 @@ module note_player(
         .step_size(6'd2 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
-        .sample(inter_2)
+        .sample(sample_out_2)
     );
     
     
@@ -67,7 +73,7 @@ module note_player(
         .step_size(6'd3 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
-        .sample(inter_3)
+        .sample(sample_out_3)
     );
     
     
@@ -77,7 +83,7 @@ module note_player(
         .step_size(6'd4 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
-        .sample(inter_4)
+        .sample(sample_out_4)
     );
 
     
@@ -87,18 +93,12 @@ module note_player(
         .step_size(6'd5 * step_size),
         .generate_next(play_enable && generate_next_sample),
         .sample_ready(new_sample_ready),
-        .sample(inter_5)
+        .sample(sample_out_5)
     );
 
 
     //adjust amplitude of higher harmonics
-    assign sample_out_1 = inter_1;
-    assign sample_out_2 = inter_2;
-    assign sample_out_3 = inter_3;
-    assign sample_out_4 = inter_4;
-    assign sample_out_5 = inter_5;
-    
-    
+ 
     
     wire [5:0] state, next_state;
     dffre #(.WIDTH(6)) state_reg (

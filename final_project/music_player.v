@@ -152,7 +152,7 @@ module music_player(
     
     note_player note_player2(
         .clk(clk),
-        .reset(reset ),
+        .reset(reset),
         .play_enable(play),
         .note_to_load(note_to_play[11:6]),
         .duration_to_load(duration_for_note[11:6]),
@@ -219,10 +219,10 @@ module music_player(
     //dffr #(.WIDTH(16)) pipeline_ff_sample_out (.clk(clk), .r(reset), .d(sample_out0), .q(sample_out));
     assign sample_out = sample_out0;
     
-    wire signed [18:0]sum;     
+    wire signed [15:0]sum;     
     reg signed [15:0] note_signed1, note_signed2, note_signed3;
     wire [5:0]amplitude_total;
-    dynamics dynamite(.voicing(voicing[2:0]), .clk(clk), .reset(reset), .beat(beat), .amplitude_total(amplitude_total));
+    dynamics dynamite(.voicing(voicing[2:0]), .clk(clk), .new_note(|new_note), .reset(reset), .beat(beat), .amplitude_total(amplitude_total));
     
     wire[5:0] amplitude_1,amplitude_2,amplitude_3,amplitude_4,amplitude_5;
     wire [15:0] note_sample_harm_1, note_sample_harm_2, note_sample_harm_3;
@@ -236,26 +236,27 @@ module music_player(
     harmonics_adding note3(.note_harm1(note_sample3_1), .note_harm2(note_sample3_2), .note_harm3(note_sample3_3), .note_harm4(note_sample3_4), .note_harm5(note_sample3_5), .amp_1(amplitude_1), .amp_2(amplitude_2), .amp_3(amplitude_3),.amp_4(amplitude_4), .amp_5(amplitude_5), .note_with_harms(note_sample_harm_3));
     
     wire [15:0] note_sample_harm__adj1, note_sample_harm__adj2, note_sample_harm__adj3;
-    assign note_sample_harm__adj1 = note_sample_harm_1[15] ? -((-note_sample_harm_1 + 1'b1) * (amplitude_total / 6'd60))+1'b1 : (note_sample_harm_1) * (amplitude_total / 6'd60);
-    assign note_sample_harm__adj2 = note_sample_harm_2[15] ? -((-note_sample_harm_2 + 1'b1) * (amplitude_total / 6'd60))+1'b1 : (note_sample_harm_2) * (amplitude_total / 6'd60);
-    assign note_sample_harm__adj3 = note_sample_harm_3[15] ? -((-note_sample_harm_3 + 1'b1) * (amplitude_total / 6'd60))+1'b1 : (note_sample_harm_3) * (amplitude_total / 6'd60);
+    wire [6:0] amplitude_test;
+    assign note_sample_harm__adj1 = |amplitude_total ?  (note_sample_harm_1[15] ? -((-note_sample_harm_1 + 1'b1)/ amplitude_total )+1'b1 : (note_sample_harm_1 / amplitude_total)) : 16'd0;
+    assign note_sample_harm__adj2 = |amplitude_total ?  (note_sample_harm_2[15] ? -((-note_sample_harm_2 + 1'b1) / amplitude_total )+1'b1 : (note_sample_harm_2 / amplitude_total)) : 16'd0;
+    assign note_sample_harm__adj3 = |amplitude_total ?  (note_sample_harm_3[15] ? -((-note_sample_harm_3 + 1'b1) / amplitude_total )+1'b1 : (note_sample_harm_3 / amplitude_total)) :16'd0 ;
     
     always @(*) begin
-        case(|note_sample_harm__adj3 + |note_sample_harm__adj2 + |note_sample_harm__adj1) //how many of these ntoes are not 0?
+        case(|note_to_play[5:0] + |note_to_play[11:6] + |note_to_play[17:12]) //how many of these ntoes are not 0?
             2'd3: begin
             note_signed1 = note_sample_harm__adj1[15] ? -((-note_sample_harm__adj1 + 1'b1)/3'd3)+1'b1 : (note_sample_harm__adj1)/3'd3;
             note_signed2 = note_sample_harm__adj2[15] ? -((-note_sample_harm__adj2 + 1'b1)/3'd3)+1'b1 : (note_sample_harm__adj2)/3'd3;
             note_signed3 = note_sample_harm__adj3[15] ? -((-note_sample_harm__adj3 + 1'b1)/3'd3)+1'b1 : (note_sample_harm__adj3)/3'd3;
             end
             2'd2: begin
-            note_signed1 = note_sample_harm__adj1[15] ? -((-note_sample_harm__adj1 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj1)/3'd2;
-            note_signed2 = note_sample_harm__adj2[15] ? -((-note_sample_harm__adj2 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj2)/3'd2;
-            note_signed3 = note_sample_harm__adj3[15] ? -((-note_sample_harm__adj3 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj3)/3'd2;
+            note_signed1 = |note_to_play[5:0] ? (note_sample_harm__adj1[15] ? -((-note_sample_harm__adj1 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj1)/3'd2) : 16'b0;
+            note_signed2 = |note_to_play[11:6] ? (note_sample_harm__adj2[15] ? -((-note_sample_harm__adj2 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj2)/3'd2) : 16'b0;
+            note_signed3 = |note_to_play[17:12] ? (note_sample_harm__adj3[15] ? -((-note_sample_harm__adj3 + 1'b1)/3'd2)+1'b1 : (note_sample_harm__adj3)/3'd2) : 16'b0;
             end
             2'd1: begin 
-            note_signed1 = note_sample_harm__adj1;
-            note_signed2 = note_sample_harm__adj2;
-            note_signed3 = note_sample_harm__adj3;
+            note_signed1 = |note_to_play[5:0] ? note_sample_harm__adj1 : 16'b0;
+            note_signed2 = |note_to_play[11:6] ? note_sample_harm__adj2 : 16'b0;
+            note_signed3 = |note_to_play[17:12] ? note_sample_harm__adj3 : 16'b0;
             end
             default: begin
             note_signed1 = 16'b0;
