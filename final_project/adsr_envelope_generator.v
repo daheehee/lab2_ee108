@@ -1,96 +1,119 @@
-`timescale 1ns / 1ps
+`define NONE    3'b000
+`define GUITAR  3'b001
+`define FLUTE   3'b010
+`define HARP    3'b100
 
-module adsr_envelope_generator(
-    input clk,
-    input rst,
-    input enable,
-    input load_new_note,
-    input beat,
-    input [5:0] t_a,
-    input [5:0] t_d,
-    input [5:0] t_s,
-    input [5:0] t_r,
-    
-    output [15:0] envelope,
-    output reg done
-);
+`define INITIAL     5'b00000
+`define ATTACK      5'b00001
+`define DECAY       5'b00010
+`define SUSTAIN     5'b00100
+`define RELEASE     5'b01000
+`define DONE        5'b10000
 
-    // State machine
-    `define INITIAL     3'd0
-    `define ATTACK      3'd1
-    `define DECAY       3'd2
-    `define SUSTAIN     3'd3
-    `define RELEASE     3'd4
+module dynamics(
+    input wire [2:0] voicing,
+    input wire clk,
+    input wire reset,
+    input wire beat, 
+    input wire new_note,
     
-    // State register
-    reg [2:0] next_state;
-    wire [2:0] state;
-    dffr #(.WIDTH(3)) state_reg(.clk(clk), .r(reset), .d(next_state), .q(state));
+    output wire [5:0] amplitude
+    );
     
-    // Amplitude register
-    reg signed [15:0] next_amplitude;
-    wire [15:0] amplitude;
-    dffre #(.WIDTH(16)) amplitude_reg(.clk(clk), .r(reset), .en(beat), .d(next_amplitude), .q(amplitude));
-    
-    // Max and min amplitudes
-    wire [15:0] MAX, MID, MIN;
-    assign MAX = 16'b1111111111111111;
-    assign MID = 16'b1000000000000000;
-    assign MIN = 16'b0;
-    
-    
-    // A helpful counter
-    reg [5:0] next_count;
-    wire [5:0] count;
-    dffr #(.WIDTH(6)) counter(.clk(clk), .r(reset), .d(next_count), .q(count));
-    
-    // Calculate gradients for linear steps
-    wire [15:0] step_a, step_d, step_r;
-    assign step_a = MAX/t_a;
-    assign step_d = MAX/t_d;
-    assign step_r = MAX/t_r;
-    
-    always @ (*) begin
-        case(state)
-            `INITIAL: begin
-                done = 0;
-                next_amplitude = 0;
-                next_count = 0;
-                next_state = enable ? `ATTACK : `INITIAL;
-            end
-            `ATTACK: begin
-                done = 0;
-                next_amplitude = ((amplitude + step_a) < MAX) ? amplitude + step_a : amplitude;
-                next_count = 0;
-                next_state = ((amplitude + step_a)< MAX) ? `ATTACK : `DECAY;
-            end
-            `DECAY: begin   
-                done = 0;
-                next_amplitude = ((amplitude - step_d) > MID) ? amplitude - step_d : amplitude;
-                next_count = 0;
-                next_state = ((amplitude - step_d) > MID) ? `DECAY : `SUSTAIN;
-            end
-            `SUSTAIN: begin
-                done = 0;
-                next_amplitude = MID;
-                next_count = count + 6'd1;
-                next_state = (count < t_s) ? `SUSTAIN : `RELEASE;
-            end
-            `RELEASE: begin
-                done = 1;
-                next_amplitude = ((amplitude - step_r) > MIN) ? amplitude - step_r : amplitude;
-                next_count = 0;
-                next_state = ((amplitude - step_r) > MIN) ? `RELEASE : `INITIAL;
-            end
-            default: begin
-                done = 0;
-                next_amplitude = 0;
-                next_count = 0;
-                next_state = `INITIAL;
-            end
-        endcase
+wire [5:0]count;
+reg [5:0] next_count;
+dffre #(.WIDTH(6)) beat_count(.clk(clk), .r(reset || count == 6'd10 || new_note), .en(super_beat == 3'd5), .d(next_count), .q(count));
+
+wire [9:0] super_beat;
+dffre #(.WIDTH(10)) sixty_count(.clk(clk), .r(reset || super_beat == 3'd5 || new_note), .en(beat), .d(super_beat+1'b1), .q(super_beat));
+
+reg [5:0] next_amplitude; 
+dffre #(.WIDTH(6)) amplitude_reg(.clk(clk), .r(reset || (|voicing && new_note)), .d(next_amplitude), .q(amplitude), .en(super_beat == 3'd5));
+
+wire [4:0] state;
+reg [4:0]next_state;
+dffre #(.WIDTH(2)) state_change(.clk(clk), .r(reset || new_note), .en(super_beat == 3'd5), .d(next_state), .q(state));
+// 0, 30/60 (2), 60/60 (1) , 30/60 (2), 15/60 (4), 15/120(8), 4/60(16), 2/60(32), 1/60 (64), 
+
+// Calculate gradients for linear steps
+reg [5:0] step_a, step_r, t_s;
+wire [5:0] MAX, MID, MIN;
+assign MAX = 6'd1;
+assign MID = 6'b100000;
+assign MIN = 6'b000000;
+
+always @(*) begin
+    case (voicing)
+        3'b000: begin
+            step_a = 0;
+            t_s = 0;
+        end
+        3'b001: begin // Flute
+            step_a = 6'd1;
+            t_s = 6'd1;
+        end
+        3'b010: begin // Harp
+            step_a = 6'd1;
+            t_s = 6'd1;
+        end
+        3'b100: begin // Guitar
+            step_a = 6'd1;
+            t_s = 6'd1;
+        end
+        default: begin
+            step_a = 0;
+            t_s = 0;
+        end
+    endcase
+end
+
+// Precompute state transitions to reduce timing issues
+wire attack_done = amplitude >= MAX;
+wire decay_done = (amplitude == MID) || (voicing == 3'b000);
+wire sustain_done = count >= t_s;
+wire release_done = (amplitude - step_r) <= MIN;
+
+always @(*) begin
+    case(state)
+//    `INITIAL: begin
+//        next_amplitude = (voicing == 3'b000) ? MAX : 6'd0;
+//        next_count = 0;
+//        next_state = `ATTACK;
+//    end
+    `ATTACK: begin
+        next_amplitude = (voicing == 3'b000) ? MAX : // Normal note
+            (amplitude == MIN) ? 6'd2 : // Flute
+            amplitude - 6'd1; // Harp, Guitar - fast attack
+        next_count = count + 1'b1;
+        next_state = (count ==  2'd1) ? `DECAY: `ATTACK;
+    end 
+    `DECAY: begin
+        next_amplitude = (voicing == 3'b000) ? MAX : (voicing == 3'b001) ? amplitude - (amplitude >> 3) : amplitude >> 1;
+        next_count = 0;
+        next_state = decay_done ? `SUSTAIN: `DECAY; // Stop once amplitude hits MID
     end
-    
-    assign envelope = amplitude;
-   
+    `SUSTAIN: begin
+        next_amplitude = (voicing == 3'b000) ? MAX : MID;
+        next_count = count + 1'b1; // count up (on every beat) towards sustain period
+        next_state = sustain_done ? `RELEASE : `SUSTAIN; // sustain period over
+    end
+    `RELEASE: begin
+        next_amplitude = release_done ? amplitude - step_a : amplitude;
+        next_count = 0;
+        next_state = release_done ? `DONE : `RELEASE;
+    end
+    `DONE: begin
+        next_amplitude = MIN;
+        next_count = 0;
+        next_state = (reset || (|voicing && new_note)) ? `INITIAL : `DONE;
+    end
+    default: begin
+        next_amplitude = (voicing == 3'b000) ? MAX : 6'd0;
+        next_count = 0;
+        next_state = `INITIAL;
+    end
+    endcase
+
+end
+
 endmodule
