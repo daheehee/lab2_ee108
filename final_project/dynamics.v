@@ -3,9 +3,11 @@
 `define FLUTE   3'b010
 `define HARP    3'b100
 
-`define ATTACK    2'b00
-`define DECAY  2'b01
-`define SUSTAIN   2'b11
+`define ATTACK      3'b000
+`define DECAY       3'b001
+`define SUSTAIN     3'b010
+`define RELEASE     3'b011
+`define INITIAL     3'b100
 
 module dynamics(
     input wire [2:0] voicing,
@@ -32,25 +34,42 @@ dffre #(.WIDTH(2)) state_change(.clk(clk), .r(reset || new_note), .en(super_beat
 // 0, 30/60 (2), 60/60 (1) , 30/60 (2), 15/60 (4), 15/120(8), 4/60(16), 2/60(32), 1/60 (64), 
 always @(*) begin
     case(state)
+    `INITIAL: begin
+        amplitude_total_next = 0;
+        next_count = 0;
+        next_state = (new_note) ? `ATTACK : `INITIAL;
+    end
     `ATTACK: begin
-        amplitude_total_next = (voicing == 3'b000) ? 6'd1 :((amplitude_total == 6'd0) ? 6'd2 : amplitude_total - 6'd1);
+        amplitude_total_next = (voicing == 3'b000) ? 6'd1 :
+            ((amplitude_total == 6'd0) ? 6'd2 : // If just beginning, start at 1/2 amplitude
+            ((voicing == 3'b001) ? amplitude_total - 6'd1:
+            amplitude_total - 6'd2)); // Otherwise, increase amplitude by different increments based on voicing
         next_count = count + 1'b1;
-        next_state = (count == 2'd1) ? ((voicing == 3'b010) ? `SUSTAIN : `DECAY) : ((voicing == 3'b000) ? `SUSTAIN : `ATTACK);
+        next_state = (count == 6'd1) ? `DECAY : `ATTACK;
     end 
     `DECAY: begin
-        amplitude_total_next = amplitude_total << 1;
+        amplitude_total_next = (voicing == 3'b000) ? 6'd1 : 
+            ((voicing == 3'b001) ? amplitude_total + (amplitude_total << 2):
+            amplitude_total << 1);
         next_count = count + 1'b1;
-        next_state = (count == 6'd9) ? `ATTACK : state;
+        next_state = (count == 6'd4) ? `SUSTAIN : state;
     end
     `SUSTAIN: begin
-        amplitude_total_next = 6'd1;
+        amplitude_total_next = (voicing == 3'b000) ? 6'd1 : amplitude_total;
         next_count = count + 1'b1;
-        next_state = state;
+        next_state = (voicing == 3'b000 || count == 6'd7) ? `RELEASE : `SUSTAIN;
+    end
+    `RELEASE: begin
+        amplitude_total_next = (voicing == 3'b000) ? 6'd1 :
+            ((amplitude_total == 6'd0) ? 6'b111111 : 
+            amplitude_total + 6'd1);
+        next_count = count + 1'b1;
+        next_state = (count == 6'd10) ? `INITIAL : `RELEASE;
     end
     default: begin
-        next_state = (voicing == 3'b000) ? `SUSTAIN : `ATTACK; 
-        next_count = 6'b0;
-        amplitude_total_next = 6'd3;
+        amplitude_total_next = 0;
+        next_count = 0;
+        next_state = (new_note) ? `ATTACK : `INITIAL;
     end 
     endcase
 
